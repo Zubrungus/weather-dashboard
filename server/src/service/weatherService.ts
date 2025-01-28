@@ -2,7 +2,6 @@ import dayjs, { type Dayjs } from 'dayjs';
 import dotenv from 'dotenv';
 dotenv.config();
 
-// TODO: Define an interface for the Coordinates object
 interface Coordinates {
   name: string;
   lat: number;
@@ -11,7 +10,6 @@ interface Coordinates {
   state: string;
 }
 
-// TODO: Define a class for the Weather object
 class Weather {
   city: string;
   date: Dayjs | string;
@@ -39,9 +37,8 @@ class Weather {
   }
 }
 
-// TODO: Complete the WeatherService class
 class WeatherService {
-  
+
   private baseURL?: string;
 
   private apiKey?: string;
@@ -53,26 +50,31 @@ class WeatherService {
 
     this.apiKey = process.env.API_KEY || '';
   }
-  async fetchWeather(cityName: string){
-  // TODO: method to fetch weather based on city 
-  // TODO: method to fetch 5 day forecast based on lon and lat 
-//base URL from instructions: https://api.openweathermap.org/data/2.5/forecast?lat={lat}&lon={lon}&appid={API key}
-  // TODO: method to build and return your array of weather objects
-  
-  //returned object wants city, date, icon, iconDescription, tempF, windSpeed, humidity
-  this.city = cityName;
-  const initialResponse = await fetch(`${this.baseURL}/geo/1.0/direct?q=${this.city}&limit=1&appid=${this.apiKey}`);
-  const parsedCity = await initialResponse.json();
-  
-  const parsedName = parsedCity.name;
-  const lat = parsedCity.lat;
-  const lon = parsedCity.lon;
+  async fetchWeather(cityName: string) {
+    this.city = cityName;
+    const coordResponse = await fetch(`${this.baseURL}/geo/1.0/direct?q=${this.city}&limit=1&appid=${this.apiKey}`);
+    const parsedCoord = await coordResponse.json();
 
-  const response = await fetch(`${this.baseURL}/data/3.0/onecall?lat=${lat}&lon=${lon}&exclude=minutely,hourly&appid=${this.apiKey}`)
-  const parsedResponse = response.json();
+    const parsedName = parsedCoord[0].name;
+    const lat = parsedCoord.lat;
+    const lon = parsedCoord.lon;
 
-  
-};
+    const response = await fetch(`${this.baseURL}/data/3.0/onecall?lat=${lat}&lon=${lon}&exclude=minutely,hourly&units=imperial&appid=${this.apiKey}`)
+    const parsedResponse = await response.json();
+
+    const weatherArray: Weather[] = [];
+
+    const currentDayWeather = new Weather(parsedName, dayjs(), parsedResponse.current.temp, parsedResponse.current.wind_speed, parsedResponse.current.humidity, parsedResponse.current.weather.icon, parsedResponse.current.weather.description);
+    weatherArray.push(currentDayWeather);
+
+    for (let i = 0; i < 5; i++) {
+      const forecastWeather = new Weather(parsedName, dayjs().add(i + 1, 'day'), parsedResponse.daily[i].temp.max, parsedResponse.daily[i].wind_speed, parsedResponse.daily[i].humidity, parsedResponse.daily[i].weather.icon, parsedResponse.daily[i].weather.description);
+      weatherArray.push(forecastWeather);
+    };
+
+    return weatherArray;
+  }
+
 }
 
 export default new WeatherService();
