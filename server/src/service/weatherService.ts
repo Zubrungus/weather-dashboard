@@ -2,15 +2,15 @@ import dayjs, { type Dayjs } from 'dayjs';
 import dotenv from 'dotenv';
 dotenv.config();
 
-interface Coordinates {
+/*interface Coordinates {
   name: string;
   lat: number;
   lon: number;
   country: string;
   state: string;
-}
+}*/
 
-class Weather {
+export class Weather {
   city: string;
   date: Dayjs | string;
   tempF: number;
@@ -52,23 +52,25 @@ class WeatherService {
   }
   async fetchWeather(cityName: string) {
     this.city = cityName;
+
     const coordResponse = await fetch(`${this.baseURL}/geo/1.0/direct?q=${this.city}&limit=1&appid=${this.apiKey}`);
     const parsedCoord = await coordResponse.json();
 
     const parsedName = parsedCoord[0].name;
-    const lat = parsedCoord.lat;
-    const lon = parsedCoord.lon;
+    const lat = parsedCoord[0].lat;
+    const lon = parsedCoord[0].lon;
 
     const response = await fetch(`${this.baseURL}/data/3.0/onecall?lat=${lat}&lon=${lon}&exclude=minutely,hourly&units=imperial&appid=${this.apiKey}`)
     const parsedResponse = await response.json();
 
+    
     const weatherArray: Weather[] = [];
 
-    const currentDayWeather = new Weather(parsedName, dayjs(), parsedResponse.current.temp, parsedResponse.current.wind_speed, parsedResponse.current.humidity, parsedResponse.current.weather.icon, parsedResponse.current.weather.description);
+    const currentDayWeather = new Weather(parsedName, dayjs().format('MM/DD/YYYY'), parsedResponse.current.temp, parsedResponse.current.wind_speed, parsedResponse.current.humidity, parsedResponse.current.weather[0].icon, parsedResponse.current.weather[0].description);
     weatherArray.push(currentDayWeather);
 
     for (let i = 0; i < 5; i++) {
-      const forecastWeather = new Weather(parsedName, dayjs().add(i + 1, 'day'), parsedResponse.daily[i].temp.max, parsedResponse.daily[i].wind_speed, parsedResponse.daily[i].humidity, parsedResponse.daily[i].weather.icon, parsedResponse.daily[i].weather.description);
+      const forecastWeather = new Weather(parsedName, dayjs().add(i + 1, 'day').format('MM/DD/YYYY'), parsedResponse.daily[i].temp.max, parsedResponse.daily[i].wind_speed, parsedResponse.daily[i].humidity, parsedResponse.daily[i].weather[0].icon, parsedResponse.daily[i].weather[0].description);
       weatherArray.push(forecastWeather);
     };
 
