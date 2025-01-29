@@ -9,6 +9,7 @@ import WeatherService from '../../service/weatherService.js';
 router.post('/', async (req, res) => {
   
   try{
+    //Receive array of weather objects, add the city to the history, and respond with the weather array
     let weatherArray: Weather[] = await WeatherService.fetchWeather(req.body.cityName);
     HistoryService.addCity(weatherArray[0].city);
     res.json(weatherArray);
@@ -21,6 +22,7 @@ router.post('/', async (req, res) => {
 
 router.get('/history', async (_req, res) => {
   try{
+    //Get saved cities and respond with them
     const savedCities = await HistoryService.getCities();
     res.json(savedCities)
   }catch(err){
